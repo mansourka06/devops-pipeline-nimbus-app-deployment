@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Nimbus · Cloud-native, by design</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+
+  <div class="bg-glow"></div>
+  <canvas id="particles"></canvas>
+
+  <header class="nav">
+    <div class="nav-brand">
+      <span class="logo-mark">◆</span> Nimbus
+    </div>
+    <nav class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#architecture">Architecture</a>
+      <a href="#status">Status</a>
+      <a class="nav-cta" href="#status">Live Metrics</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="badge">
+        <span class="dot"></span> All systems operational
+      </div>
+      <h1>
+        Ship faster.<br />
+        <span class="gradient-text">Sleep better.</span>
+      </h1>
+      <p class="subtitle">
+        Nimbus is the reference microservice for a complete DevOps pipeline —
+        Terraform-provisioned EKS, Ansible-configured infra, Jenkins CI/CD,
+        and Prometheus/Grafana observability, wired end to end.
+      </p>
+      <div class="hero-actions">
+        <a href="/api/info" class="btn btn-primary">View API <span>→</span></a>
+        <a href="/metrics" class="btn btn-ghost">Raw Metrics</a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat"><span class="stat-value" data-count="99.99">0</span><span class="stat-suffix">%</span><span class="stat-label">Uptime SLA</span></div>
+        <div class="stat"><span class="stat-value" data-count="3">0</span><span class="stat-label">AZ Redundancy</span></div>
+        <div class="stat"><span class="stat-value" data-count="150">0</span><span class="stat-suffix">ms</span><span class="stat-label">p95 latency</span></div>
+      </div>
+    </section>
+
+    <section id="features" class="features">
+      <h2>One pipeline, six disciplines</h2>
+      <div class="grid">
+        <article class="card">
+          <div class="card-icon">🏗️</div>
+          <h3>Infrastructure as Code</h3>
+          <p>VPC, subnets, IAM and an autoscaling EKS cluster — fully provisioned with Terraform, modular and reusable.</p>
+        </article>
+        <article class="card">
+          <div class="card-icon">⚙️</div>
+          <h3>Configuration Management</h3>
+          <p>Ansible playbooks bootstrap and harden every server: Docker, kubectl, Helm, monitoring agents.</p>
+        </article>
+        <article class="card">
+          <div class="card-icon">🔁</div>
+          <h3>CI/CD with Jenkins</h3>
+          <p>A declarative pipeline builds, tests, scans and ships this exact app on every push to GitHub.</p>
+        </article>
+        <article class="card">
+          <div class="card-icon">📦</div>
+          <h3>Containers &amp; Orchestration</h3>
+          <p>Dockerized and deployed on Kubernetes (EKS), with autoscaling, health checks and rolling updates.</p>
+        </article>
+        <article class="card">
+          <div class="card-icon">📊</div>
+          <h3>Monitoring</h3>
+          <p>Prometheus scrapes this service's <code>/metrics</code> endpoint; Grafana turns it into live dashboards.</p>
+        </article>
+        <article class="card">
+          <div class="card-icon">♻️</div>
+          <h3>Automation-ready</h3>
+          <p>Every layer is codified. Point it at a new microservice and the whole pipeline comes with it.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="architecture" class="architecture">
+      <h2>How a commit becomes a running pod</h2>
+      <div class="flow">
+        <div class="flow-step"><span>1</span>Git Push</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step"><span>2</span>Jenkins CI</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step"><span>3</span>Build &amp; Test</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step"><span>4</span>Docker → ECR</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step"><span>5</span>Deploy to EKS</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step"><span>6</span>Prometheus/Grafana</div>
+      </div>
+    </section>
+
+    <section id="status" class="status">
+      <h2>Live from this pod</h2>
+      <div class="status-grid" id="status-grid">
+        <div class="status-card">
+          <span class="status-label">Service</span>
+          <span class="status-value" id="svc-name">—</span>
+        </div>
+        <div class="status-card">
+          <span class="status-label">Version</span>
+          <span class="status-value" id="svc-version">—</span>
+        </div>
+        <div class="status-card">
+          <span class="status-label">Hostname / Pod</span>
+          <span class="status-value" id="svc-host">—</span>
+        </div>
+        <div class="status-card">
+          <span class="status-label">Uptime</span>
+          <span class="status-value" id="svc-uptime">—</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Nimbus — demo microservice for the DevOps / DevSecOps / GitOps reference project.</p>
+  </footer>
+
+  <script src="/script.js"></script>
+</body>
+</html>
