@@ -1,0 +1,22 @@
+version: "3.9"
+
+# Usage: docker compose -f jenkins/docker-compose.yml up -d
+# Jenkins accessible sur http://localhost:8080
+# Mot de passe initial: docker exec nimbus-jenkins cat /var/jenkins_home/secrets/initialAdminPassword
+
+services:
+  jenkins:
+    image: jenkins/jenkins:lts-jdk17
+    container_name: nimbus-jenkins
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock   # permet à Jenkins de lancer docker build
+    environment:
+      JAVA_OPTS: "-Djenkins.install.runSetupWizard=true"
+    restart: unless-stopped
+
+volumes:
+  jenkins_home:

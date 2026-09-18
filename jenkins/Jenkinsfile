@@ -1,0 +1,132 @@
+// Jenkinsfile — pipeline déclaratif pour Nimbus
+//
+// Prérequis sur l'agent Jenkins (installés par Ansible, voir ansible/):
+//   docker, kubectl, helm, aws-cli, credentials AWS + kubeconfig configurés
+// Prérequis dans Jenkins (Manage Jenkins > Credentials):
+//   - "aws-credentials"      : AWS access key / secret key (ou rôle IAM sur l'agent)
+//   - "github-token"         : token pour le statut de commit GitHub
+//   - "ecr-repo-url"         : texte, ex. 123456789.dkr.ecr.eu-west-1.amazonaws.com/nimbus-dev
+//   - "eks-cluster-name"     : texte, ex. nimbus-dev-eks
+
+pipeline {
+  agent any
+
+  options {
+    timestamps()
+    disableConcurrentBuilds()
+    buildDiscarder(logRotator(numToKeepStr: '20'))
+  }
+
+  environment {
+    AWS_REGION       = 'eu-west-1'
+    IMAGE_NAME       = "${env.ECR_REPO_URL}"
+    IMAGE_TAG        = "${env.GIT_COMMIT.take(7)}"
+    APP_DIR          = 'app'
+    K8S_NAMESPACE    = 'default'
+  }
+
+  stages {
+
+    stage('Checkout') {
+      steps {
+        checkout scm
+        script {
+          env.GIT_COMMIT_SHORT = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+        }
+      }
+    }
+
+    stage('Install & Lint') {
+      steps {
+        dir(APP_DIR) {
+          sh 'npm ci'
+          sh 'npm run lint || true'   // non bloquant pour cette démo
+        }
+      }
+    }
+
+    stage('Unit Tests') {
+      steps {
+        dir(APP_DIR) {
+          sh 'npm test -- --ci --reporters=default --reporters=jest-junit'
+        }
+      }
+      post {
+        always {
+          junit allowEmptyResults: true, testResults: "${APP_DIR}/junit.xml"
+        }
+      }
+    }
+
+    stage('Build Docker Image') {
+      steps {
+        dir(APP_DIR) {
+          sh "docker build -t ${IMAGE_NAME}:${GIT_COMMIT_SHORT} -t ${IMAGE_NAME}:latest ."
+        }
+      }
+    }
+
+    stage('Security Scan (Trivy)') {
+      steps {
+        sh """
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+            aquasec/trivy image --severity CRITICAL,HIGH --exit-code 1 \
+            ${IMAGE_NAME}:${GIT_COMMIT_SHORT}
+        """
+      }
+    }
+
+    stage('Push to ECR') {
+      steps {
+        withCredentials([usernamePassword(credentialsId: 'aws-credentials',
+                          usernameVariable: 'AWS_ACCESS_KEY_ID',
+                          passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+          sh """
+            aws ecr get-login-password --region ${AWS_REGION} | \
+              docker login --username AWS --password-stdin ${IMAGE_NAME}
+            docker push ${IMAGE_NAME}:${GIT_COMMIT_SHORT}
+            docker push ${IMAGE_NAME}:latest
+          """
+        }
+      }
+    }
+
+    stage('Deploy to EKS') {
+      steps {
+        withCredentials([usernamePassword(credentialsId: 'aws-credentials',
+                          usernameVariable: 'AWS_ACCESS_KEY_ID',
+                          passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+          sh """
+            aws eks update-kubeconfig --region ${AWS_REGION} --name ${EKS_CLUSTER_NAME}
+            kubectl set image deployment/nimbus nimbus=${IMAGE_NAME}:${GIT_COMMIT_SHORT} \
+              -n ${K8S_NAMESPACE} --record
+            kubectl rollout status deployment/nimbus -n ${K8S_NAMESPACE} --timeout=180s
+          """
+        }
+      }
+    }
+
+    stage('Smoke Test') {
+      steps {
+        sh """
+          SVC_URL=\$(kubectl get svc nimbus -n ${K8S_NAMESPACE} -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+          echo "Checking health at http://\${SVC_URL}/health"
+          curl -sf --retry 5 --retry-delay 5 http://\${SVC_URL}/health
+        """
+      }
+    }
+  }
+
+  post {
+    success {
+      echo "✅ Deployed ${IMAGE_NAME}:${GIT_COMMIT_SHORT} to EKS successfully."
+    }
+    failure {
+      echo "❌ Pipeline failed — check the stage logs above."
+      // Exemple: notifier Slack ou GitHub status ici
+    }
+    always {
+      sh 'docker image prune -f || true'
+    }
+  }
+}
