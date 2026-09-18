@@ -1,0 +1,72 @@
+---
+- name: Install Java (required by Jenkins)
+  apt:
+    name: openjdk-17-jre
+    state: present
+    update_cache: true
+
+- name: Add Jenkins GPG key
+  apt_key:
+    url: https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key
+    state: present
+
+- name: Add Jenkins apt repository
+  apt_repository:
+    repo: "deb https://pkg.jenkins.io/debian-stable binary/"
+    state: present
+    filename: jenkins
+
+- name: Install Jenkins
+  apt:
+    name: jenkins
+    state: present
+    update_cache: true
+  notify: restart jenkins
+
+- name: Ensure Jenkins service is enabled and running
+  service:
+    name: jenkins
+    state: started
+    enabled: true
+
+- name: Open Jenkins port in UFW (if UFW is active)
+  ufw:
+    rule: allow
+    port: "8080"
+    proto: tcp
+  ignore_errors: true
+
+- name: Wait for Jenkins to finish initial boot
+  wait_for:
+    port: 8080
+    delay: 5
+    timeout: 120
+
+- name: Install recommended Jenkins plugins via Jenkins CLI
+  # Nécessite d'avoir récupéré le mot de passe initial et créé un token API
+  # au préalable. Laissé en commentaire car il dépend d'une étape manuelle
+  # (déverrouillage initial) — voir README.md du dossier ansible/.
+  # community.general.jenkins_plugin:
+  #   name: "{{ item }}"
+  #   url_username: admin
+  #   url_password: "{{ jenkins_admin_password }}"
+  #   url: http://localhost:8080
+  # loop:
+  #   - git
+  #   - github
+  #   - docker-workflow
+  #   - kubernetes-cli
+  #   - pipeline-aws
+  #   - blueocean
+  debug:
+    msg: "Voir README.md pour l'installation des plugins post-déverrouillage"
+
+- name: Read initial admin password
+  command: cat /var/lib/jenkins/secrets/initialAdminPassword
+  register: jenkins_initial_password
+  changed_when: false
+  ignore_errors: true
+
+- name: Display initial admin password
+  debug:
+    msg: "Jenkins initial admin password: {{ jenkins_initial_password.stdout | default('not available yet') }}"

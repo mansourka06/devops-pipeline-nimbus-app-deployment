@@ -1,0 +1,18 @@
+# Inventaire dynamique — découvre automatiquement les instances EC2 par tag,
+# plutôt que de maintenir une liste d'IPs à la main. Nécessite le collection
+# amazon.aws (`ansible-galaxy collection install amazon.aws`).
+#
+# Usage: ansible-playbook -i inventory/aws_ec2.yml playbooks/jenkins.yml
+plugin: amazon.aws.aws_ec2
+regions:
+  - eu-west-1
+filters:
+  tag:Role: jenkins
+  instance-state-name: running
+keyed_groups:
+  - key: tags.Role
+    prefix: role
+hostnames:
+  - tag:Name
+compose:
+  ansible_host: public_ip_address

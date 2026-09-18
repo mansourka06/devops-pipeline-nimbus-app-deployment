@@ -1,0 +1,21 @@
+---
+- name: Configure Jenkins CI/CD server
+  hosts: jenkins
+  become: true
+  vars:
+    kubectl_version: "1.30.0"
+    node_exporter_version: "1.8.2"
+
+  roles:
+    - docker
+    - jenkins
+    - k8s-tools
+    - monitoring-agent
+
+  post_tasks:
+    - name: Summary
+      debug:
+        msg:
+          - "Jenkins available at: http://{{ ansible_host }}:8080"
+          - "Docker, kubectl, Helm and AWS CLI installed for pipeline use"
+          - "node_exporter running on :9100 for Prometheus scraping"

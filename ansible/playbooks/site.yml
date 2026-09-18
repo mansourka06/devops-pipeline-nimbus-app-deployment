@@ -1,0 +1,3 @@
+---
+# Point d'entrée unique : ansible-playbook -i inventory/hosts.ini playbooks/site.yml
+- import_playbook: jenkins.yml
