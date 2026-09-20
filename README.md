@@ -75,7 +75,7 @@ CoreDNS, EBS CSI), le registre ECR, et déploie le Cluster Autoscaler
 via Helm.
 
 ```bash
-aws eks update-kubeconfig --region eu-west-1 --name nimbus-dev-eks
+aws eks update-kubeconfig --region eu-west-1 --name devops-nimbus-dev-eks
 ```
 
 ### 2. Serveur Jenkins (Ansible)
@@ -105,8 +105,50 @@ cd app
 npm install
 npm test              # 6 tests, ~94% de couverture
 npm start             # http://localhost:3000
-docker build -t nimbus .
+docker build -t devops-nimbus-app .
 ```
+
+### 4. Kubernetes
+
+```bash
+kubectl apply -k kubernetes/overlays/dev
+# ou pour la prod :
+kubectl apply -k kubernetes/overlays/prod
+```
+
+### 5. Monitoring
+
+```bash
+cd monitoring
+# voir monitoring/README.md pour la procédure complète
+helm install monitoring prometheus-community/kube-prometheus-stack \
+  -n monitoring --create-namespace -f prometheus/values.yaml
+kubectl apply -f prometheus/servicemonitor.yaml
+kubectl apply -f prometheus/alerts.yaml
+```
+
+## Ce qui rend ce projet "automation-ready"
+
+- **Modulaire** : chaque brique (Terraform modules, rôles Ansible, charts
+  Helm) est réutilisable telle quelle pour un autre microservice.
+- **Aucun secret en clair dans le code réel** — les placeholders sont
+  documentés, avec le chemin vers Sealed Secrets / External Secrets / SOPS.
+- **Autoscaling à deux niveaux** : HPA (pods, sur CPU/mémoire) et Cluster
+  Autoscaler (nodes EC2, sur la capacité du cluster).
+- **Observabilité native** : l'app expose `/metrics` dès le départ —
+  brancher un nouveau microservice sur ce pipeline suffit à le rendre
+  monitorable.
+
+## Limites connues de cette livraison
+
+- Le module Terraform pour l'instance EC2 Jenkins elle-même n'est pas
+  inclus (l'accent a été mis sur EKS) — à ajouter selon vos préférences
+  (spot instance, taille, etc.).
+- Les exemples de mots de passe (Postgres démo, Grafana admin) sont des
+  placeholders **à remplacer** avant tout déploiement réel.
+- Testé localement (Node/Jest, syntaxe HCL/YAML/JSON) mais **pas déployé
+  sur un vrai compte AWS** dans le cadre de cette livraison — à valider
+  avec `terraform plan` sur votre compte avant `apply`.
 
 ## Author
 

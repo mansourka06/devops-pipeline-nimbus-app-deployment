@@ -71,13 +71,13 @@ data "aws_iam_policy_document" "app_assume" {
     condition {
       test     = "StringEquals"
       variable = "${module.eks.oidc_provider_url}:sub"
-      values   = ["system:serviceaccount:default:nimbus"]
+      values   = ["system:serviceaccount:default:devops-nimbus-app"]
     }
   }
 }
 
 resource "aws_iam_role" "app" {
-  name               = "${var.project_name}-${var.environment}-nimbus-app-role"
+  name               = "${var.project_name}-${var.environment}-devops-nimbus-app-role"
   assume_role_policy = data.aws_iam_policy_document.app_assume.json
 }
 

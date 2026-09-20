@@ -1,7 +1,7 @@
 variable "project_name" {
   description = "Nom du projet, utilisé comme préfixe pour toutes les ressources"
   type        = string
-  default     = "nimbus"
+  default     = "devops-nimbus-app"
 }
 
 variable "environment" {
