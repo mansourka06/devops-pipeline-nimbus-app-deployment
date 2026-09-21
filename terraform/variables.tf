@@ -31,7 +31,7 @@ variable "az_count" {
 variable "kubernetes_version" {
   description = "Version d'EKS"
   type        = string
-  default     = "1.30"
+  default     = "1.36"
 }
 
 variable "node_instance_types" {

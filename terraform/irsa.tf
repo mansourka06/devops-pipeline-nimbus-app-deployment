@@ -77,7 +77,7 @@ data "aws_iam_policy_document" "app_assume" {
 }
 
 resource "aws_iam_role" "app" {
-  name               = "${var.project_name}-${var.environment}-devops-nimbus-app-role"
+  name               = "${var.project_name}-${var.environment}-app-role"
   assume_role_policy = data.aws_iam_policy_document.app_assume.json
 }
 
