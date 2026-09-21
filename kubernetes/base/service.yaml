@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nimbus
+spec:
+  selector:
+    app: nimbus
+  ports:
+    - name: http
+      port: 80
+      targetPort: 3000
+  type: ClusterIP

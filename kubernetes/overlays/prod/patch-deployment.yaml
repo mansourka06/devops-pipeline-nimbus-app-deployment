@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nimbus
+spec:
+  replicas: 3
+  template:
+    spec:
+      containers:
+        - name: nimbus
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 512Mi
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: nimbus
+spec:
+  minReplicas: 3
+  maxReplicas: 20
