@@ -1,0 +1,56 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: nimbus-alerts
+  namespace: monitoring
+  labels:
+    release: monitoring
+spec:
+  groups:
+    - name: nimbus.rules
+      rules:
+        - alert: NimbusHighErrorRate
+          expr: >
+            sum(rate(nimbus_http_requests_total{status_code=~"5.."}[5m]))
+            /
+            sum(rate(nimbus_http_requests_total[5m])) > 0.05
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Nimbus error rate above 5%"
+            description: "More than 5% of requests to Nimbus have returned a 5xx status over the last 5 minutes."
+
+        - alert: NimbusHighLatency
+          expr: >
+            histogram_quantile(0.95,
+              sum(rate(nimbus_http_request_duration_seconds_bucket[5m])) by (le)
+            ) > 1
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Nimbus p95 latency above 1s"
+            description: "95th percentile request latency has exceeded 1 second for 5 minutes."
+
+        - alert: NimbusPodDown
+          expr: up{job="nimbus"} == 0
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Nimbus target down"
+            description: "Prometheus has not been able to scrape a Nimbus pod for 2 minutes."
+
+        - alert: NimbusHighMemoryUsage
+          expr: >
+            sum(container_memory_working_set_bytes{pod=~"nimbus-.*"}) by (pod)
+            /
+            sum(kube_pod_container_resource_limits{pod=~"nimbus-.*", resource="memory"}) by (pod)
+            > 0.9
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Nimbus pod near memory limit"
+            description: "A Nimbus pod is using more than 90% of its memory limit for 10 minutes."

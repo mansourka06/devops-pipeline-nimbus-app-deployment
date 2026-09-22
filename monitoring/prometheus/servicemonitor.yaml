@@ -1,0 +1,23 @@
+# Ce ServiceMonitor est ce qui relie concrètement Prometheus à l'app.
+# Le Service "nimbus" doit exister dans le namespace ciblé par
+# `namespaceSelector` (ajuster selon l'environnement : nimbus-dev, etc.)
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: nimbus
+  namespace: monitoring
+  labels:
+    release: monitoring   # doit correspondre au nom du Helm release kube-prometheus-stack
+spec:
+  namespaceSelector:
+    matchNames:
+      - default
+      - nimbus-dev
+      - nimbus-production
+  selector:
+    matchLabels:
+      app: nimbus
+  endpoints:
+    - port: http           # doit correspondre au nom du port dans le Service (voir service-with-port-name.yaml)
+      path: /metrics
+      interval: 15s

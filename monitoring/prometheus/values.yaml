@@ -1,0 +1,60 @@
+# Values pour le chart Helm officiel kube-prometheus-stack, qui déploie
+# Prometheus + Grafana + Alertmanager + les exporters standards en une fois.
+#
+# Installation :
+#   helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+#   helm install monitoring prometheus-community/kube-prometheus-stack \
+#     -n monitoring --create-namespace -f monitoring/prometheus/values.yaml
+
+prometheus:
+  prometheusSpec:
+    retention: 15d
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: 500m
+        memory: 1Gi
+    # Permet à Prometheus de découvrir les ServiceMonitor créés en dehors
+    # du namespace "monitoring" (par ex. celui de Nimbus dans "default").
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 20Gi
+
+grafana:
+  enabled: true
+  adminPassword: "CHANGE_ME_use_a_secret_in_real_deployments"
+  persistence:
+    enabled: true
+    size: 5Gi
+  service:
+    type: ClusterIP
+  # Charge automatiquement les dashboards JSON du dossier
+  # monitoring/grafana/dashboards/ via un ConfigMap (voir dashboards-configmap.yaml)
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      searchNamespace: ALL
+
+alertmanager:
+  enabled: true
+  alertmanagerSpec:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+
+nodeExporter:
+  enabled: true
+
+kubeStateMetrics:
+  enabled: true
