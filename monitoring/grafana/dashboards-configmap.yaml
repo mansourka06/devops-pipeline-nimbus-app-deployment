@@ -1,0 +1,23 @@
+# Le sidecar Grafana (activé dans values.yaml) scanne tous les namespaces
+# à la recherche de ConfigMaps portant le label "grafana_dashboard: 1" et
+# charge automatiquement leur contenu comme dashboard. Pas besoin de
+# toucher à l'UI Grafana manuellement.
+#
+# Génération : kubectl create configmap nimbus-dashboard \
+#   --from-file=nimbus-overview.json=monitoring/grafana/dashboards/nimbus-overview.json \
+#   -n monitoring --dry-run=client -o yaml > dashboards-configmap.yaml
+# (puis ajouter le label ci-dessous à la main)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nimbus-dashboard
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  nimbus-overview.json: |
+    # Voir monitoring/grafana/dashboards/nimbus-overview.json — contenu
+    # identique, dupliqué ici automatiquement par la commande ci-dessus.
+    # Laissé en placeholder pour éviter un fichier dupliqué dans ce repo ;
+    # utiliser la commande `kubectl create configmap ... --from-file`
+    # documentée plus haut pour générer la vraie version à partir du JSON.
